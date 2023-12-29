@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>Expense Tracker</title>
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+
+        .container {
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-6 offset-md-3">
+            <h2 class="text-center mb-4">Track Expenses</h2>
+            <form id="expenseForm">
+                <div class="mb-3">
+                    <label for="expenseDescription" class="form-label">Expense Description</label>
+                    <input type="text" class="form-control" id="expenseDescription" required>
+                </div>
+                <div class="mb-3">
+                    <label for="expenseAmount" class="form-label">Amount</label>
+                    <input type="number" class="form-control" id="expenseAmount" required>
+                </div>
+                <div class="mb-3">
+                    <label for="expenseCategory" class="form-label">Category</label>
+                    <input type="text" class="form-control" id="expenseCategory" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Add Expense</button>
+            </form>
+
+            <div class="mt-4">
+                <h4>Expense List</h4>
+                <ul id="expenseList" class="list-group">
+                    <!-- Expenses will be dynamically added here -->
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const expenseForm = document.getElementById('expenseForm');
+        const expenseList = document.getElementById('expenseList');
+
+        // Load expenses from local storage on page load
+        loadExpenses();
+
+        expenseForm.addEventListener('submit', function (event) {
+            event.preventDefault();
+
+            const expenseDescription = document.getElementById('expenseDescription').value;
+            const expenseAmount = document.getElementById('expenseAmount').value;
+            const expenseCategory = document.getElementById('expenseCategory').value;
+
+            if (expenseDescription && expenseAmount && expenseCategory) {
+                // Add expense to the list
+                const expenseItem = document.createElement('li');
+                expenseItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+                expenseItem.innerHTML = `
+                    <div>
+                        <strong>${expenseDescription}</strong> - $${expenseAmount} (${expenseCategory})
+                    </div>
+                    <div>
+                        <button type="button" class="btn btn-warning btn-sm" onclick="editExpense(this)">Edit</button>
+                        <button type="button" class="btn btn-danger btn-sm" onclick="deleteExpense(this)">Delete</button>
+                    </div>
+                `;
+                expenseList.appendChild(expenseItem);
+
+                // Save expense to local storage
+                saveExpense(expenseDescription, expenseAmount, expenseCategory);
+
+                // Clear the form
+                expenseForm.reset();
+            }
+        });
+
+        function saveExpense(description, amount, category) {
+            let expenses = JSON.parse(localStorage.getItem('expenses')) || [];
+            expenses.push({ description, amount, category });
+            localStorage.setItem('expenses', JSON.stringify(expenses));
+        }
+
+        function loadExpenses() {
+            let expenses = JSON.parse(localStorage.getItem('expenses')) || [];
+
+            // Populate the expense list
+            expenses.forEach(expense => {
+                const expenseItem = document.createElement('li');
+                expenseItem.className = 'list-group-item d-flex justify-content-between align-items-center';
+                expenseItem.innerHTML = `
+                    <div>
+                        <strong>${expense.description}</strong> - $${expense.amount} (${expense.category})
+                    </div>
+                    <div>
+                        <button type="button" class="btn btn-warning btn-sm" onclick="editExpense(this)">Edit</button>
+                        <button type="button" class="btn btn-danger btn-sm" onclick="deleteExpense(this)">Delete</button>
+                    </div>
+                `;
+                expenseList.appendChild(expenseItem);
+            });
+        }
+
+        window.editExpense = function (button) {
+            const listItem = button.closest('li');
+            const description = listItem.querySelector('strong').textContent;
+            const amount = listItem.querySelector('strong').nextSibling.textContent.match(/\d+/)[0];
+            const category = listItem.querySelector('strong').nextSibling.textContent.match(/\(([^)]+)\)/)[1];
+
+            // Populate the form with the selected expense data
+            document.getElementById('expenseDescription').value = description;
+            document.getElementById('expenseAmount').value = amount;
+            document.getElementById('expenseCategory').value = category;
+
+            // Delete the selected expense from the list
+            deleteExpense(button);
+        }
+
+        window.deleteExpense = function (button) {
+            const listItem = button.closest('li');
+            const description = listItem.querySelector('strong').textContent;
+
+            // Remove the expense from the list
+            listItem.remove();
+
+            // Remove the expense from local storage
+            removeExpense(description);
+        }
+
+        function removeExpense(description) {
+            let expenses = JSON.parse(localStorage.getItem('expenses')) || [];
+            expenses = expenses.filter(expense => expense.description !== description);
+            localStorage.setItem('expenses', JSON.stringify(expenses));
+        }
+    });
+</script>
+
+</body>
+</html>
